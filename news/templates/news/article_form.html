@@ -1,0 +1,54 @@
+{% extends 'news/base.html' %}
+{% block title %}
+    {% if mode == 'edit' %}Edit article{% else %}New article{% endif %}
+    - Headline
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>
+            {% if mode == 'edit' %}
+                Edit article
+            {% else %}
+                Write a new article
+            {% endif %}
+        </h1>
+        <p>
+            {% if mode == 'edit' %}
+                Changes save right away. Approval status stays the
+                same unless you resubmit.
+            {% else %}
+                New drafts go to the editor's queue. Once approved
+                they show up on the site.
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<form method="post" class="stacked" style="max-width:680px;">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="field">
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+                <p class="help">{{ field.help_text }}</p>
+            {% endif %}
+            {{ field.errors }}
+        </div>
+    {% endfor %}
+    <div class="button-row">
+        <button type="submit" class="btn">
+            {% if mode == 'edit' %}
+                Save changes
+            {% else %}
+                Submit for approval
+            {% endif %}
+        </button>
+        <a class="btn-secondary btn"
+           href="{% url 'article_list' %}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

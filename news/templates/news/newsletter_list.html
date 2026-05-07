@@ -1,0 +1,38 @@
+{% extends 'news/base.html' %}
+{% block title %}Newsletters - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Newsletters</h1>
+        <p>Bundles of articles put together by journalists.</p>
+    </div>
+    {% if user.is_authenticated %}
+        {% if user.is_journalist or user.is_editor %}
+            <a class="btn" href="{% url 'newsletter_create' %}">
+                + New newsletter
+            </a>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% if newsletters %}
+    <div class="article-grid">
+        {% for n in newsletters %}
+            <a class="article-card"
+               href="{% url 'newsletter_detail' n.pk %}">
+                <h3>{{ n.title }}</h3>
+                <span class="meta">
+                    by <strong>{{ n.author.username }}</strong>
+                    &middot; {{ n.created_at|date:"d M Y" }}
+                    &middot; {{ n.articles.count }} article{{ n.articles.count|pluralize }}
+                </span>
+                <p class="excerpt">
+                    {{ n.description|truncatewords:24 }}
+                </p>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">No newsletters yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'news/base.html' %}
+{% block title %}{{ newsletter.title }} - Headline{% endblock %}
+{% block content %}
+<p>
+    <a href="{% url 'newsletter_list' %}">
+        &larr; Back to newsletters
+    </a>
+</p>
+
+<article class="article-detail">
+    <h1>{{ newsletter.title }}</h1>
+    <div class="meta">
+        by <strong>{{ newsletter.author.username }}</strong>
+        &middot; {{ newsletter.created_at|date:"d M Y H:i" }}
+    </div>
+    <div class="content">
+        {{ newsletter.description|linebreaks }}
+    </div>
+
+    <h2 style="margin-top:24px; font-family:Georgia,serif;">
+        Articles in this issue
+    </h2>
+    {% if newsletter.articles.all %}
+        <table class="simple">
+            <thead>
+                <tr><th>Article</th><th>Author</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+                {% for article in newsletter.articles.all %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'article_detail' article.pk %}?from_newsletter={{ newsletter.pk }}">
+                                {{ article.title }}
+                            </a>
+                        </td>
+                        <td>{{ article.author.username }}</td>
+                        <td>{{ article.created_at|date:"d M Y" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty">
+            No articles bundled in this newsletter yet.
+        </p>
+    {% endif %}
+</article>
+{% endblock %}

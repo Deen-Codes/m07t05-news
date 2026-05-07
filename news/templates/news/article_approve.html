@@ -1,0 +1,45 @@
+{% extends 'news/base.html' %}
+{% block title %}Approve {{ article.title }} - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Approve this article?</h1>
+        <p>
+            On confirmation, subscribers of
+            {% if article.publisher %}
+                <strong>{{ article.publisher.name }}</strong>
+            {% endif %}
+            and <strong>{{ article.author.username }}</strong>
+            will receive an email and a JSON copy will be POSTed to
+            the <code>/api/approved/</code> webhook.
+        </p>
+    </div>
+</div>
+
+<article class="article-detail">
+    <h1>{{ article.title }}</h1>
+    <div class="meta">
+        by <strong>{{ article.author.username }}</strong>
+        {% if article.publisher %}
+            &middot; {{ article.publisher.name }}
+        {% else %}
+            &middot; independent
+        {% endif %}
+        &middot;
+        {{ article.created_at|date:"d M Y H:i" }}
+        <span class="pill pill-pending">Pending</span>
+    </div>
+    <div class="content">{{ article.content|linebreaks }}</div>
+</article>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="button-row">
+        <button class="btn-accent btn" type="submit">
+            Approve &amp; notify subscribers
+        </button>
+        <a class="btn-secondary btn"
+           href="{% url 'approval_queue' %}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

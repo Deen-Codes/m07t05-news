@@ -1,0 +1,70 @@
+{% extends 'news/base.html' %}
+{% block title %}New newsletter - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Compile a newsletter</h1>
+        <p>
+            Pick the approved articles you want in this newsletter.
+            You can change the selection later.
+        </p>
+    </div>
+</div>
+
+<form method="post" class="stacked" style="max-width:760px;">
+    {% csrf_token %}
+
+    <div class="field">
+        <label for="{{ form.title.id_for_label }}">
+            {{ form.title.label }}
+        </label>
+        {{ form.title }}
+        {{ form.title.errors }}
+    </div>
+
+    <div class="field">
+        <label for="{{ form.description.id_for_label }}">
+            {{ form.description.label }}
+        </label>
+        {{ form.description }}
+        {{ form.description.errors }}
+    </div>
+
+    <div class="field">
+        <label>Articles in this newsletter</label>
+        {% if form.articles.field.queryset %}
+            <div style="display:grid; grid-template-columns:
+                        repeat(auto-fill, minmax(260px, 1fr));
+                        gap: 6px; padding: 12px;
+                        border: 1px solid var(--color-border);
+                        border-radius: var(--radius-sm);
+                        background: var(--color-surface);">
+                {% for choice in form.articles %}
+                    <label style="display:flex; gap:8px;
+                                  align-items:flex-start;
+                                  font-weight:400; margin:0;
+                                  padding:6px 4px;">
+                        {{ choice.tag }}
+                        <span>{{ choice.choice_label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            {% if form.articles.help_text %}
+                <p class="help">{{ form.articles.help_text }}</p>
+            {% endif %}
+        {% else %}
+            <p class="help">
+                No approved articles yet. An editor has to approve
+                at least one before you can include it here.
+            </p>
+        {% endif %}
+        {{ form.articles.errors }}
+    </div>
+
+    <div class="button-row">
+        <button type="submit" class="btn">Save newsletter</button>
+        <a class="btn-secondary btn"
+           href="{% url 'newsletter_list' %}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

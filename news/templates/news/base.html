@@ -1,0 +1,71 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Headline - News Platform{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'news/styles.css' %}">
+</head>
+<body>
+<header class="site-header">
+    <div class="container nav">
+        <a class="brand" href="{% url 'home' %}">
+            <span class="brand-mark">H</span>
+            <span class="brand-text">Headline</span>
+        </a>
+        <nav class="nav-links">
+            <a href="{% url 'article_list' %}">Articles</a>
+            <a href="{% url 'newsletter_list' %}">Newsletters</a>
+            <a href="{% url 'publisher_list' %}">Publishers</a>
+            {% if user.is_authenticated %}
+                {% if user.is_journalist %}
+                    <a href="{% url 'article_create' %}">Write</a>
+                    <a href="{% url 'newsletter_create' %}">Newsletter</a>
+                {% endif %}
+                {% if user.is_editor %}
+                    <a href="{% url 'approval_queue' %}">Approval queue</a>
+                    <a href="{% url 'newsletter_create' %}">Newsletter</a>
+                {% endif %}
+                {% if user.is_reader %}
+                    <a href="{% url 'manage_subscriptions' %}">
+                        Subscriptions
+                    </a>
+                {% endif %}
+                <span class="role-badge role-{{ user.role }}">
+                    {{ user.get_role_display }}
+                </span>
+                <form method="post" action="{% url 'logout' %}"
+                      class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="link-button">
+                        Log out
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Log in</a>
+                <a class="cta" href="{% url 'register' %}">Sign up</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+<main class="container">
+    {% if messages %}
+        <ul class="flash-list">
+            {% for message in messages %}
+                <li class="flash flash-{{ message.tags }}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+    <div class="container">
+        <span class="brand-mark">H</span>
+        Headline &middot; news platform
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{% extends 'news/base.html' %}
+{% block title %}{{ article.title }} - Headline{% endblock %}
+{% block content %}
+<p>
+    {% if request.GET.from_newsletter %}
+        <a href="{% url 'newsletter_detail' request.GET.from_newsletter %}">
+            &larr; Back to newsletter
+        </a>
+    {% else %}
+        <a href="{% url 'article_list' %}">
+            &larr; Back to articles
+        </a>
+    {% endif %}
+</p>
+
+<article class="article-detail">
+    <h1>{{ article.title }}</h1>
+    <div class="meta">
+        by <strong>{{ article.author.username }}</strong>
+        {% if article.publisher %}
+            &middot; {{ article.publisher.name }}
+        {% else %}
+            &middot; independent
+        {% endif %}
+        &middot;
+        {{ article.created_at|date:"d M Y H:i" }}
+        {% if article.approved %}
+            <span class="pill pill-approved">Approved</span>
+        {% else %}
+            <span class="pill pill-pending">Awaiting approval</span>
+        {% endif %}
+    </div>
+    <div class="content">{{ article.content|linebreaks }}</div>
+
+    {% if user.is_authenticated %}
+        {% if user.is_editor or article.author_id == user.id %}
+            <div class="button-row">
+                <a class="btn-secondary btn"
+                   href="{% url 'article_edit' article.pk %}">
+                    Edit
+                </a>
+                <a class="btn-danger btn"
+                   href="{% url 'article_delete' article.pk %}">
+                    Delete
+                </a>
+                {% if user.is_editor and not article.approved %}
+                    <a class="btn-accent btn"
+                       href="{% url 'article_approve' article.pk %}">
+                        Approve
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+</article>
+{% endblock %}

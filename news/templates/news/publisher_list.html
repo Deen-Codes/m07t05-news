@@ -1,0 +1,59 @@
+{% extends 'news/base.html' %}
+{% block title %}Publishers - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Publishers</h1>
+        <p>Publishers our journalists and editors are tied to.</p>
+    </div>
+    {% if user.is_authenticated and user.is_editor %}
+        <a class="btn" href="{% url 'publisher_create' %}">
+            + New publisher
+        </a>
+    {% endif %}
+</div>
+
+{% if publishers %}
+    <div class="article-grid">
+        {% for p in publishers %}
+            <article class="article-card">
+                <h3>{{ p.name }}</h3>
+                <span class="meta">
+                    {{ p.editors.count }} editor{{ p.editors.count|pluralize }}
+                    &middot;
+                    {{ p.journalists.count }} journalist{{ p.journalists.count|pluralize }}
+                </span>
+                <p class="excerpt">
+                    {{ p.description|default:"No description provided." }}
+                </p>
+                {% if user.is_authenticated and user.is_reader %}
+                    <form method="post" class="inline-form"
+                          action="{% url 'publisher_subscribe_toggle' p.pk %}"
+                          style="margin-top:8px;">
+                        {% csrf_token %}
+                        {% if p.id in subscribed_ids %}
+                            <button type="submit"
+                                    class="btn-secondary btn">
+                                &#10004; Subscribed - click to unfollow
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn-accent btn">
+                                + Subscribe
+                            </button>
+                        {% endif %}
+                    </form>
+                {% endif %}
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">
+        No publishers yet.
+        {% if user.is_authenticated and user.is_editor %}
+            <a href="{% url 'publisher_create' %}">Create the first one</a>.
+        {% else %}
+            An editor needs to set one up.
+        {% endif %}
+    </p>
+{% endif %}
+{% endblock %}

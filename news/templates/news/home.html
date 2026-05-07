@@ -1,0 +1,56 @@
+{% extends 'news/base.html' %}
+{% block title %}Headline{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Headline</h1>
+    <p>
+        Journalists write, editors approve, readers subscribe to the
+        people and publishers they like. The same articles are also
+        available over a token-protected REST API.
+    </p>
+    <div class="button-row">
+        <a class="btn-accent btn"
+           href="{% url 'article_list' %}">Read articles</a>
+        {% if not user.is_authenticated %}
+            <a class="btn-secondary btn"
+               href="{% url 'register' %}">Create account</a>
+        {% endif %}
+    </div>
+</section>
+
+<div class="page-head">
+    <div>
+        <h1>Latest approved stories</h1>
+        <p>The most recent articles editors have approved.</p>
+    </div>
+    <a href="{% url 'article_list' %}">Browse all &rarr;</a>
+</div>
+
+{% if articles %}
+    <div class="article-grid">
+        {% for article in articles %}
+            <a class="article-card"
+               href="{% url 'article_detail' article.pk %}">
+                <h3>{{ article.title }}</h3>
+                <span class="meta">
+                    by <strong>{{ article.author.username }}</strong>
+                    {% if article.publisher %}
+                        &middot; {{ article.publisher.name }}
+                    {% else %}
+                        &middot; independent
+                    {% endif %}
+                    &middot;
+                    {{ article.created_at|date:"d M Y" }}
+                </span>
+                <p class="excerpt">
+                    {{ article.content|truncatewords:24 }}
+                </p>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">
+        No approved articles yet.
+    </p>
+{% endif %}
+{% endblock %}

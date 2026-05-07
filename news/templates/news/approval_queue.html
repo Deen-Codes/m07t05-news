@@ -1,0 +1,49 @@
+{% extends 'news/base.html' %}
+{% block title %}Approval queue - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Approval queue</h1>
+        <p>
+            Articles waiting for approval. Approving one emails
+            subscribers and POSTs to <code>/api/approved/</code>.
+        </p>
+    </div>
+</div>
+
+{% if articles %}
+    <div class="article-grid">
+        {% for article in articles %}
+            <article class="article-card">
+                <h3>
+                    <a href="{% url 'article_detail' article.pk %}">
+                        {{ article.title }}
+                    </a>
+                </h3>
+                <span class="meta">
+                    by <strong>{{ article.author.username }}</strong>
+                    {% if article.publisher %}
+                        &middot; {{ article.publisher.name }}
+                    {% else %}
+                        &middot; independent
+                    {% endif %}
+                    <span class="pill pill-pending">Pending</span>
+                </span>
+                <p class="excerpt">
+                    {{ article.content|truncatewords:30 }}
+                </p>
+                <div class="button-row">
+                    <a class="btn-accent btn"
+                       href="{% url 'article_approve' article.pk %}">
+                        Review &amp; approve
+                    </a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">
+        Nothing waiting for approval.
+    </p>
+{% endif %}
+{% endblock %}

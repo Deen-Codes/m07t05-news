@@ -1,0 +1,41 @@
+{% extends 'news/base.html' %}
+{% block title %}Articles - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>All approved articles</h1>
+        <p>Articles editors have approved.</p>
+    </div>
+    {% if user.is_authenticated and user.is_journalist %}
+        <a class="btn" href="{% url 'article_create' %}">
+            + Write article
+        </a>
+    {% endif %}
+</div>
+
+{% if articles %}
+    <div class="article-grid">
+        {% for article in articles %}
+            <a class="article-card"
+               href="{% url 'article_detail' article.pk %}">
+                <h3>{{ article.title }}</h3>
+                <span class="meta">
+                    by <strong>{{ article.author.username }}</strong>
+                    {% if article.publisher %}
+                        &middot; {{ article.publisher.name }}
+                    {% else %}
+                        &middot; independent
+                    {% endif %}
+                    &middot;
+                    {{ article.created_at|date:"d M Y" }}
+                </span>
+                <p class="excerpt">
+                    {{ article.content|truncatewords:22 }}
+                </p>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">Nothing approved yet.</p>
+{% endif %}
+{% endblock %}

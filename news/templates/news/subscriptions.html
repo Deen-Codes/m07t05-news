@@ -1,0 +1,78 @@
+{% extends 'news/base.html' %}
+{% block title %}My subscriptions - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>My subscriptions</h1>
+        <p>
+            Tick the publishers and journalists you want to follow.
+            You'll receive an email whenever an editor approves a
+            new article from any of them.
+        </p>
+    </div>
+    <a class="btn-secondary btn" href="{% url 'publisher_list' %}">
+        Browse publishers
+    </a>
+</div>
+
+<form method="post" class="stacked" style="max-width:680px;">
+    {% csrf_token %}
+
+    <div class="field">
+        <label>Publishers</label>
+        {% if form.subscriptions_publishers.field.queryset %}
+            <div style="display:grid; grid-template-columns:
+                        repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 6px; padding: 12px;
+                        border: 1px solid var(--color-border);
+                        border-radius: var(--radius-sm);
+                        background: var(--color-surface);">
+                {% for choice in form.subscriptions_publishers %}
+                    <label style="display:flex; gap:8px;
+                                  align-items:center;
+                                  font-weight:400; margin:0;">
+                        {{ choice.tag }} {{ choice.choice_label }}
+                    </label>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="help">
+                No publishers yet -
+                <a href="{% url 'publisher_list' %}">browse</a>
+                or wait for an editor to add one.
+            </p>
+        {% endif %}
+        {{ form.subscriptions_publishers.errors }}
+    </div>
+
+    <div class="field">
+        <label>Journalists</label>
+        {% if form.subscriptions_journalists.field.queryset %}
+            <div style="display:grid; grid-template-columns:
+                        repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 6px; padding: 12px;
+                        border: 1px solid var(--color-border);
+                        border-radius: var(--radius-sm);
+                        background: var(--color-surface);">
+                {% for choice in form.subscriptions_journalists %}
+                    <label style="display:flex; gap:8px;
+                                  align-items:center;
+                                  font-weight:400; margin:0;">
+                        {{ choice.tag }} {{ choice.choice_label }}
+                    </label>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="help">
+                No journalists registered yet.
+            </p>
+        {% endif %}
+        {{ form.subscriptions_journalists.errors }}
+    </div>
+
+    <div class="button-row">
+        <button type="submit" class="btn">Save subscriptions</button>
+        <a class="btn-secondary btn" href="{% url 'home' %}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

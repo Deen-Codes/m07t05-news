@@ -1,0 +1,26 @@
+{% extends 'news/base.html' %}
+{% block title %}Delete {{ article.title }} - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Delete this article?</h1>
+        <p>
+            <strong>{{ article.title }}</strong> will be permanently
+            removed. This action cannot be undone.
+        </p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="button-row">
+        <button class="btn-danger btn" type="submit">
+            Yes, delete it
+        </button>
+        <a class="btn-secondary btn"
+           href="{% url 'article_detail' article.pk %}">
+            Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}
