@@ -1,0 +1,47 @@
+# docker compose up --build  -> MariaDB + Django on :8000
+
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: news_db
+      MARIADB_USER: newsapp
+      MARIADB_PASSWORD: newspass
+    ports:
+      - "3307:3306"
+    volumes:
+      - news_db_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build: .
+    image: m07t05-news:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: "django-insecure-compose-dev-key"
+      DJANGO_ALLOWED_HOSTS: "*"
+      DJANGO_DB_HOST: db
+      DJANGO_DB_PORT: "3306"
+      DJANGO_DB_NAME: news_db
+      DJANGO_DB_USER: newsapp
+      DJANGO_DB_PASSWORD: newspass
+      APPROVED_ARTICLE_WEBHOOK: "http://web:8000/api/approved/"
+    ports:
+      - "8000:8000"
+
+volumes:
+  news_db_data:
