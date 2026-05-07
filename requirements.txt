@@ -1,0 +1,5 @@
+Django==4.2.29
+mysqlclient==2.2.4
+djangorestframework==3.15.2
+requests==2.32.3
+sphinx==7.4.7
