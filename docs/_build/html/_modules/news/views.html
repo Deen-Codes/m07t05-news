@@ -378,7 +378,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Newsletter authoring (journalists and editors)</span>
+<span class="c1"># Newsletter authoring - journalists create, editors only edit/delete</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
@@ -386,13 +386,10 @@
 <a class="viewcode-back" href="../../news.html#news.views.newsletter_create">[docs]</a>
 <span class="nd">@login_required</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">newsletter_create</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a newsletter from approved articles (journalist or editor).&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-        <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Journalist&#39;</span><span class="p">)</span>
-        <span class="ow">or</span> <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Editor&#39;</span><span class="p">)</span>
-    <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Journalist-only: compile a new newsletter from approved articles.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Journalist&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">HttpResponseForbidden</span><span class="p">(</span>
-            <span class="s1">&#39;Only journalists or editors may create newsletters.&#39;</span>
+            <span class="s1">&#39;Only journalists may create newsletters.&#39;</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">NewsletterForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
@@ -409,6 +406,99 @@
         <span class="n">request</span><span class="p">,</span>
         <span class="s1">&#39;news/newsletter_form.html&#39;</span><span class="p">,</span>
         <span class="p">{</span><span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;create&#39;</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="newsletter_edit">
+<a class="viewcode-back" href="../../news.html#news.views.newsletter_edit">[docs]</a>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">newsletter_edit</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Edit a newsletter. Journalist on own, editor on any.&quot;&quot;&quot;</span>
+    <span class="n">newsletter</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Newsletter</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">is_editor</span> <span class="o">=</span> <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Editor&#39;</span><span class="p">)</span>
+    <span class="n">is_owner</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Journalist&#39;</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">newsletter</span><span class="o">.</span><span class="n">author_id</span> <span class="o">==</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">is_editor</span> <span class="ow">or</span> <span class="n">is_owner</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponseForbidden</span><span class="p">(</span>
+            <span class="s1">&#39;You do not have permission to edit this newsletter.&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">NewsletterForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="n">newsletter</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Newsletter updated.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;newsletter_detail&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">newsletter</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">NewsletterForm</span><span class="p">(</span><span class="n">instance</span><span class="o">=</span><span class="n">newsletter</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">&#39;news/newsletter_form.html&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;edit&#39;</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="newsletter_delete">
+<a class="viewcode-back" href="../../news.html#news.views.newsletter_delete">[docs]</a>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">newsletter_delete</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete a newsletter. Same role rules as newsletter_edit.&quot;&quot;&quot;</span>
+    <span class="n">newsletter</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Newsletter</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">is_editor</span> <span class="o">=</span> <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Editor&#39;</span><span class="p">)</span>
+    <span class="n">is_owner</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Journalist&#39;</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">newsletter</span><span class="o">.</span><span class="n">author_id</span> <span class="o">==</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">is_editor</span> <span class="ow">or</span> <span class="n">is_owner</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponseForbidden</span><span class="p">(</span>
+            <span class="s1">&#39;You do not have permission to delete this newsletter.&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="n">newsletter</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Newsletter deleted.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;newsletter_list&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">&#39;news/newsletter_confirm_delete.html&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s1">&#39;newsletter&#39;</span><span class="p">:</span> <span class="n">newsletter</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Journalist dashboard</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="journalist_dashboard">
+<a class="viewcode-back" href="../../news.html#news.views.journalist_dashboard">[docs]</a>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">journalist_dashboard</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Journalist&#39;s own drafts: unapproved articles + their newsletters.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_in_group</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;Journalist&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponseForbidden</span><span class="p">(</span>
+            <span class="s1">&#39;Only journalists have a dashboard.&#39;</span>
+        <span class="p">)</span>
+    <span class="n">pending_articles</span> <span class="o">=</span> <span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">author</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="n">approved</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">approved_articles</span> <span class="o">=</span> <span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">author</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="n">approved</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">my_newsletters</span> <span class="o">=</span> <span class="n">Newsletter</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">author</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">&#39;news/journalist_dashboard.html&#39;</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;pending_articles&#39;</span><span class="p">:</span> <span class="n">pending_articles</span><span class="p">,</span>
+            <span class="s1">&#39;approved_articles&#39;</span><span class="p">:</span> <span class="n">approved_articles</span><span class="p">,</span>
+            <span class="s1">&#39;newsletters&#39;</span><span class="p">:</span> <span class="n">my_newsletters</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">)</span></div>
 
 

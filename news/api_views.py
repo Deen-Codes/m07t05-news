@@ -219,9 +219,9 @@ def approve_article(request, pk):
     SessionAuthentication,
     BasicAuthentication,
 ])
-@permission_classes([IsEditorOrJournalistForWrites])
+@permission_classes([IsJournalistOrReadOnly])
 def newsletters_collection(request):
-    """GET all newsletters, POST a new one (editor or journalist)."""
+    """GET all newsletters, POST a new one (journalist only)."""
     if request.method == 'GET':
         serializer = NewsletterSerializer(
             Newsletter.objects.all(), many=True

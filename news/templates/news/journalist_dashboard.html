@@ -1,0 +1,113 @@
+{% extends 'news/base.html' %}
+{% block title %}My dashboard - Headline{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>My dashboard</h1>
+        <p>
+            Drafts, approved articles, and newsletters you have written.
+        </p>
+    </div>
+</div>
+
+<h2>Pending approval ({{ pending_articles|length }})</h2>
+{% if pending_articles %}
+    <div class="article-grid">
+        {% for article in pending_articles %}
+            <article class="article-card">
+                <h3>
+                    <a href="{% url 'article_detail' article.pk %}">
+                        {{ article.title }}
+                    </a>
+                </h3>
+                <span class="meta">
+                    submitted {{ article.created_at|date:"d M Y H:i" }}
+                </span>
+                <p class="excerpt">
+                    {{ article.content|truncatewords:24 }}
+                </p>
+                <div class="button-row">
+                    <a class="btn-secondary btn"
+                       href="{% url 'article_edit' article.pk %}">
+                        Edit
+                    </a>
+                    <a class="btn-danger btn"
+                       href="{% url 'article_delete' article.pk %}">
+                        Delete
+                    </a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">You have no articles waiting for approval.</p>
+{% endif %}
+
+<h2 style="margin-top:24px;">
+    Approved articles ({{ approved_articles|length }})
+</h2>
+{% if approved_articles %}
+    <div class="article-grid">
+        {% for article in approved_articles %}
+            <article class="article-card">
+                <h3>
+                    <a href="{% url 'article_detail' article.pk %}">
+                        {{ article.title }}
+                    </a>
+                </h3>
+                <span class="meta">
+                    published {{ article.created_at|date:"d M Y" }}
+                </span>
+                <div class="button-row">
+                    <a class="btn-secondary btn"
+                       href="{% url 'article_edit' article.pk %}">
+                        Edit
+                    </a>
+                    <a class="btn-danger btn"
+                       href="{% url 'article_delete' article.pk %}">
+                        Delete
+                    </a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">You have no approved articles yet.</p>
+{% endif %}
+
+<h2 style="margin-top:24px;">My newsletters ({{ newsletters|length }})</h2>
+{% if newsletters %}
+    <div class="article-grid">
+        {% for n in newsletters %}
+            <article class="article-card">
+                <h3>
+                    <a href="{% url 'newsletter_detail' n.pk %}">
+                        {{ n.title }}
+                    </a>
+                </h3>
+                <span class="meta">
+                    created {{ n.created_at|date:"d M Y" }}
+                </span>
+                <p class="excerpt">
+                    {{ n.description|truncatewords:24 }}
+                </p>
+                <div class="button-row">
+                    <a class="btn-secondary btn"
+                       href="{% url 'newsletter_edit' n.pk %}">
+                        Edit
+                    </a>
+                    <a class="btn-danger btn"
+                       href="{% url 'newsletter_delete' n.pk %}">
+                        Delete
+                    </a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">
+        You have no newsletters yet.
+        <a href="{% url 'newsletter_create' %}">Create one</a>.
+    </p>
+{% endif %}
+{% endblock %}

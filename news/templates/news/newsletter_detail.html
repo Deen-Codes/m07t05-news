@@ -44,5 +44,19 @@
             No articles bundled in this newsletter yet.
         </p>
     {% endif %}
+    {% if user.is_authenticated %}
+        {% if user.is_editor or newsletter.author_id == user.id %}
+            <div class="button-row" style="margin-top:16px;">
+                <a class="btn-secondary btn"
+                   href="{% url 'newsletter_edit' newsletter.pk %}">
+                    Edit
+                </a>
+                <a class="btn-danger btn"
+                   href="{% url 'newsletter_delete' newsletter.pk %}">
+                    Delete
+                </a>
+            </div>
+        {% endif %}
+    {% endif %}
 </article>
 {% endblock %}

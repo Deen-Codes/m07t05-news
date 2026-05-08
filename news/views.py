@@ -304,19 +304,16 @@ def article_approve(request, pk):
 
 
 # ---------------------------------------------------------------------------
-# Newsletter authoring (journalists and editors)
+# Newsletter authoring - journalists create, editors only edit/delete
 # ---------------------------------------------------------------------------
 
 
 @login_required
 def newsletter_create(request):
-    """Build a newsletter from approved articles (journalist or editor)."""
-    if not (
-        _in_group(request.user, 'Journalist')
-        or _in_group(request.user, 'Editor')
-    ):
+    """Journalist-only: compile a new newsletter from approved articles."""
+    if not _in_group(request.user, 'Journalist'):
         return HttpResponseForbidden(
-            'Only journalists or editors may create newsletters.'
+            'Only journalists may create newsletters.'
         )
     if request.method == 'POST':
         form = NewsletterForm(request.POST)
@@ -333,6 +330,90 @@ def newsletter_create(request):
         request,
         'news/newsletter_form.html',
         {'form': form, 'mode': 'create'},
+    )
+
+
+@login_required
+def newsletter_edit(request, pk):
+    """Edit a newsletter. Journalist on own, editor on any."""
+    newsletter = get_object_or_404(Newsletter, pk=pk)
+    is_editor = _in_group(request.user, 'Editor')
+    is_owner = (
+        _in_group(request.user, 'Journalist')
+        and newsletter.author_id == request.user.id
+    )
+    if not (is_editor or is_owner):
+        return HttpResponseForbidden(
+            'You do not have permission to edit this newsletter.'
+        )
+    if request.method == 'POST':
+        form = NewsletterForm(request.POST, instance=newsletter)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Newsletter updated.')
+            return redirect('newsletter_detail', pk=newsletter.pk)
+    else:
+        form = NewsletterForm(instance=newsletter)
+    return render(
+        request,
+        'news/newsletter_form.html',
+        {'form': form, 'mode': 'edit'},
+    )
+
+
+@login_required
+def newsletter_delete(request, pk):
+    """Delete a newsletter. Same role rules as newsletter_edit."""
+    newsletter = get_object_or_404(Newsletter, pk=pk)
+    is_editor = _in_group(request.user, 'Editor')
+    is_owner = (
+        _in_group(request.user, 'Journalist')
+        and newsletter.author_id == request.user.id
+    )
+    if not (is_editor or is_owner):
+        return HttpResponseForbidden(
+            'You do not have permission to delete this newsletter.'
+        )
+    if request.method == 'POST':
+        newsletter.delete()
+        messages.success(request, 'Newsletter deleted.')
+        return redirect('newsletter_list')
+    return render(
+        request,
+        'news/newsletter_confirm_delete.html',
+        {'newsletter': newsletter},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Journalist dashboard
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def journalist_dashboard(request):
+    """Journalist's own drafts: unapproved articles + their newsletters."""
+    if not _in_group(request.user, 'Journalist'):
+        return HttpResponseForbidden(
+            'Only journalists have a dashboard.'
+        )
+    pending_articles = Article.objects.filter(
+        author=request.user,
+        approved=False,
+    )
+    approved_articles = Article.objects.filter(
+        author=request.user,
+        approved=True,
+    )
+    my_newsletters = Newsletter.objects.filter(author=request.user)
+    return render(
+        request,
+        'news/journalist_dashboard.html',
+        {
+            'pending_articles': pending_articles,
+            'approved_articles': approved_articles,
+            'newsletters': my_newsletters,
+        },
     )
 
 

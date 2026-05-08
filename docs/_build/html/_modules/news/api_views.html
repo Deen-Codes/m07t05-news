@@ -271,9 +271,9 @@
     <span class="n">SessionAuthentication</span><span class="p">,</span>
     <span class="n">BasicAuthentication</span><span class="p">,</span>
 <span class="p">])</span>
-<span class="nd">@permission_classes</span><span class="p">([</span><span class="n">IsEditorOrJournalistForWrites</span><span class="p">])</span>
+<span class="nd">@permission_classes</span><span class="p">([</span><span class="n">IsJournalistOrReadOnly</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">newsletters_collection</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;GET all newsletters, POST a new one (editor or journalist).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GET all newsletters, POST a new one (journalist only).&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;GET&#39;</span><span class="p">:</span>
         <span class="n">serializer</span> <span class="o">=</span> <span class="n">NewsletterSerializer</span><span class="p">(</span>
             <span class="n">Newsletter</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span>

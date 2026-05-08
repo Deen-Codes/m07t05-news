@@ -441,6 +441,18 @@ class NewsletterTests(BaseAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
+    def test_editor_cannot_create_newsletter_via_api(self):
+        """Editors can only edit/delete; brief blocks create."""
+        self.login_as(self.editor)
+        response = self.client.post(
+            '/api/newsletters/',
+            {'title': 'Editor try', 'description': '-'},
+            format='json',
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_403_FORBIDDEN
+        )
+
 
 # ---------------------------------------------------------------------------
 # Reader / journalist field contract
@@ -459,3 +471,120 @@ class CustomUserFieldContractTests(BaseAPITestCase):
         """A journalist's ``reader_fields`` accessor returns None."""
         self.assertIsNone(self.journalist.reader_fields())
         self.assertIsNotNone(self.journalist.journalist_fields())
+
+
+# ---------------------------------------------------------------------------
+# Browser-side newsletter edit/delete + journalist dashboard
+# ---------------------------------------------------------------------------
+
+
+class NewsletterBrowserTests(BaseAPITestCase):
+    """Newsletter create/edit/delete via the browser views."""
+
+    def setUp(self):
+        super().setUp()
+        self.newsletter = Newsletter.objects.create(
+            title='Weekly',
+            description='Roundup',
+            author=self.journalist,
+        )
+
+    def test_editor_cannot_create_newsletter_via_browser(self):
+        """Brief: editors can edit/delete but not create."""
+        self.client.force_login(self.editor)
+        response = self.client.get('/newsletters/new/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_journalist_can_create_newsletter_via_browser(self):
+        # POST a valid newsletter; success path returns 302 redirect
+        # (no template render, so it dodges the test client's template
+        # instrumentation that breaks on Python 3.14).
+        self.client.force_login(self.journalist)
+        response = self.client.post(
+            '/newsletters/new/',
+            {'title': 'Brand new', 'description': 'fresh'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            Newsletter.objects.filter(
+                author=self.journalist,
+                title='Brand new',
+            ).exists()
+        )
+
+    def test_owner_journalist_can_edit_own_newsletter(self):
+        self.client.force_login(self.journalist)
+        response = self.client.post(
+            f'/newsletters/{self.newsletter.pk}/edit/',
+            {'title': 'Renamed', 'description': 'Roundup'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.newsletter.refresh_from_db()
+        self.assertEqual(self.newsletter.title, 'Renamed')
+
+    def test_editor_can_edit_any_newsletter(self):
+        self.client.force_login(self.editor)
+        response = self.client.post(
+            f'/newsletters/{self.newsletter.pk}/edit/',
+            {'title': 'Edited', 'description': 'Roundup'},
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_editor_can_delete_newsletter(self):
+        self.client.force_login(self.editor)
+        response = self.client.post(
+            f'/newsletters/{self.newsletter.pk}/delete/',
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            Newsletter.objects.filter(pk=self.newsletter.pk).exists()
+        )
+
+    def test_reader_cannot_edit_newsletter(self):
+        self.client.force_login(self.reader)
+        response = self.client.get(
+            f'/newsletters/{self.newsletter.pk}/edit/',
+        )
+        self.assertEqual(response.status_code, 403)
+
+
+class JournalistDashboardTests(BaseAPITestCase):
+    """The /dashboard/ page lists drafts + approved + newsletters."""
+
+    def test_journalist_sees_their_drafts(self):
+        # Call the view via RequestFactory to bypass the test client's
+        # template-rendered signal handler (which has a known incompat
+        # with Python 3.14 + Django 4.2). The view itself works fine.
+        from django.test import RequestFactory
+        from news.views import journalist_dashboard
+
+        Article.objects.create(
+            title='Draft', content='-', author=self.journalist,
+            approved=False,
+        )
+        Article.objects.create(
+            title='Live', content='-', author=self.journalist,
+            approved=True,
+        )
+        Newsletter.objects.create(
+            title='Mine', description='-', author=self.journalist,
+        )
+        factory = RequestFactory()
+        request = factory.get('/dashboard/')
+        request.user = self.journalist
+        response = journalist_dashboard(request)
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn('Draft', body)
+        self.assertIn('Live', body)
+        self.assertIn('Mine', body)
+
+    def test_reader_blocked_from_dashboard(self):
+        self.client.force_login(self.reader)
+        response = self.client.get('/dashboard/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_blocked_from_dashboard(self):
+        self.client.force_login(self.editor)
+        response = self.client.get('/dashboard/')
+        self.assertEqual(response.status_code, 403)

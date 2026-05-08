@@ -47,6 +47,21 @@ urlpatterns = [
         views.newsletter_detail,
         name='newsletter_detail',
     ),
+    path(
+        'newsletters/<int:pk>/edit/',
+        views.newsletter_edit,
+        name='newsletter_edit',
+    ),
+    path(
+        'newsletters/<int:pk>/delete/',
+        views.newsletter_delete,
+        name='newsletter_delete',
+    ),
+    path(
+        'dashboard/',
+        views.journalist_dashboard,
+        name='journalist_dashboard',
+    ),
     path('publishers/', views.publisher_list, name='publisher_list'),
     path(
         'publishers/new/',
